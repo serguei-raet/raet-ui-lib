@@ -3,7 +3,7 @@ module App.Controls.Textarea {
     export function TextareaDirective() {
         return {
             restrict: 'A',
-            templateUrl: '/dist/controls/textarea/translations/textarea.template.en.html',
+            templateUrl: '/dist/controls/textarea/textarea.template.html',
             transclude: true,
             scope: {
                 ngModel: "=",
