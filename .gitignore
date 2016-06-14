@@ -1,0 +1,7 @@
+dist
+node_modules
+typings
+source/**/*.css
+source/**/*.js
+source/**/*.map
+source/**/translations/*

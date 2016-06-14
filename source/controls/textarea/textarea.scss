@@ -1,0 +1,29 @@
+@import '../../Sass/common.scss';
+
+.textarea {
+    width: 100%;
+    font-weight: $font-light;
+
+    &__control {
+        width: inherit;
+        padding: sp(2);
+
+        &:focus {
+            border: 1px solid $brand-color;
+        }
+    }
+
+    &__max {
+        display: block;
+        text-align: right;
+
+        @include rtl {
+            text-align: left;
+        }
+
+        em {
+            font-weight: $font-medium;
+            font-style: normal;
+        }
+    }
+}

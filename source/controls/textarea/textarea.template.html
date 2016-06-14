@@ -1,0 +1,6 @@
+<label class="textarea">
+    <span class="form__label">{{label}}</span>
+    <textarea ng-model="ngModel" maxlength="{{max}}" rows="{{rows || 8}}" class="textarea__control" ></textarea>
+    <span ng-if="max && max - ngModel.length == 1" class="textarea__max">{{@character|params('<em>{{max - ngModel.length}}</em>')}}</span>
+    <span ng-if="max && max - ngModel.length != 1" class="textarea__max">{{@characters|params('<em>{{max - ngModel.length}}</em>')}}</span>
+</label>

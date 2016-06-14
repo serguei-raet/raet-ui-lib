@@ -1,0 +1,24 @@
+<html ng-app="testApp">
+    <head>
+        <title></title>
+        <link type="text/css" rel="stylesheet" href="node_modules/bootstrap/dist/css/bootstrap.min.css"/>
+        <link type="text/css" rel="stylesheet" href="dist/sass/feed.css"/>
+        <link type="text/css" rel="stylesheet" href="dist/sass/form.css"/>
+        <link type="text/css" rel="stylesheet" href="dist/controls/textarea/textarea.css"/>
+        <script src="node_modules/angular/angular.min.js"></script>
+        <script src="dist/common/app.module.js"></script>
+        <script src="dist/controls/textarea/textarea.directive.js"></script>
+    </head>
+    <body>
+        <div yfo-textarea
+                data-label="{{testText}}"
+                data-ng-model="testText"
+                data-max="50"
+                data-rows="10"></div>
+        <div>{{testText}}</div>
+        <textarea ng-model="testText"></textarea>
+        <script type="text/javascript">
+            angular.module("testApp", ["angularPOC"]);
+        </script>
+    </body>
+</html>
