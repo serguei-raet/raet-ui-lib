@@ -12,47 +12,52 @@ var nunjucksEnv;
 var resources;
 
 function processDirectory(directory) {
+    var cbCount = 1;
     var list = fs.readdirSync(directory);
     for (var item of list) {
-        var fullPath = path.join(directory, item);
-        if (fs.statSync(fullPath).isDirectory()) {
-            if (item.toLowerCase() != "translations") {
-                processDirectory(fullPath);
-            }
+        switch (path.extname(item).toLowerCase()) {
+            case ".html":
+                if (path.basename(directory) != "translations" &&
+                        fs.statSync(path.join(directory, item)).isFile()) {
+                    htmlTranslate(directory, item);
+                }
+                break;
+            case ".scss":
+                cbCount++;
+                sassCompileFile(directory, item, deploy);
+                break;
         }
-        else {
-            switch (path.extname(item).toLowerCase()) {
-                case ".scss":
-                    sassCompileFile(directory, item);
-                    break;
-                case ".css":
-                    if (!exists(path.join(directory, path.basename(item, path.extname(item)) + ".scss"))) {
-                        deployFile(directory, item);
+    }
+
+    function deploy() {
+        if (!--cbCount) {
+            var list = fs.readdirSync(directory);
+            for (var item of list) {
+                var fullPath = path.join(directory, item);
+                if (fs.statSync(fullPath).isDirectory()) {
+                    processDirectory(fullPath);
+                }
+                else {
+                    switch (path.extname(item).toLowerCase()) {
+                        case ".css":
+                        case ".js":
+                            deployFile(directory, item);
+                            break;
+                        case ".html":
+                            if (path.basename(directory) == "translations") {
+                                htmlToJs(directory, item);
+                            }
+                            break;
                     }
-                    break;
-                case ".js":
-                case ".json":
-                    deployFile(directory, item);
-                    break;
-                case ".html":
-                    if (path.basename(directory) != "translations") {
-                        htmlTranslate(directory, item);
-                    }
-                    else {
-                        deployFile(directory, item);
-                    }
-                    break;
+                }
             }
         }
     }
     
-    var translationsSubDir = path.join(directory, "translations");
-    if (exists(translationsSubDir)) {
-        processDirectory(translationsSubDir);
-    }
+    deploy();
 }
 
-function sassCompileFile(directory, file) {
+function sassCompileFile(directory, file, cb) {
     file = path.join(directory, file);
     console.log('Compiling ' + file + '...');
     sass.render({
@@ -60,6 +65,7 @@ function sassCompileFile(directory, file) {
     }, function(err, result) {
         if (err) {
             console.log('Failed to compile SCSS file (' + file + '):' + err);
+            cb();
         }
         else {
             var targetFile = path.basename(file, path.extname(file)) + ".css";
@@ -67,12 +73,34 @@ function sassCompileFile(directory, file) {
                 if (err) {
                     console.log('Cannot save file (' + targetPath + '):' + err);
                 }
-                else {
-                    deployFile(directory, targetFile);
-                }
+                cb();
             });
         }
     });
+}
+
+function htmlToJs(directory, file) {
+    file = path.join(directory, file);
+    console.log('Deploying HTML as JS: ' + file + '...');
+    
+    var fileExt = path.extname(file);
+    var baseName = path.basename(file, fileExt);
+    var langExt = path.extname(baseName);
+    var targetDir = path.join(distDir, path.relative(sourceDir, directory));
+    var outPath = path.join(targetDir, baseName + '.js');
+    var basePath = path.join(path.relative(sourceDir, path.dirname(directory)), path.basename(baseName, langExt) + '.js');
+
+    var html = fs.readFileSync(file, {encoding: 'utf-8'});
+    var js = "App.module.templates['" + basePath + "']=\"" +
+        html.replace(/[\n]/g, '\\n').replace(/[\r]/g, '\\r').replace(/[\"]/g, '\\"') +
+        "\";";
+
+    ensureDir(targetDir);
+    fs.writeFileSync(outPath, js);
+
+    if (langExt == ".en") {
+        fs.writeFileSync(path.join(distDir, basePath), js);
+    }
 }
 
 function htmlTranslate(directory, file) {
@@ -117,11 +145,6 @@ function htmlTranslate(directory, file) {
             JSON.parse(fs.readFileSync(path.join(resourcesDir, resource))));
 
         fs.writeFileSync(outPath, result);
-        
-        if (lang == "en") {
-            deployFile(translationsDir, outFile,
-                path.join(distDir, relativeDir), file);
-        }
     }
 }
 
